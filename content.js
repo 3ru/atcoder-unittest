@@ -1,87 +1,87 @@
 chrome.runtime.onMessage.addListener(function (message, sender, callback) {
-  if (message.functiontoInvoke == "onClick") {
-    var io = onClick();
-    
-    chrome.storage.sync.get({
-      language: 'Java',
-    }, function(items) {
-      switch(items.language){
-        case "Java":
-          copy(createJUnit(io));
-          break;
-        case "CSharp":
-          copy(createMSTest(io));
-          break;
-        case "Python3":
-          copy(createPyUnittest(io));
-          break;
-        case "Kotlin":
-          copy(createJUnitKotlin(io));
-          break;
-        default:
-          throw new Error("Unknown language. [items.language=" + items.language + "]");
-      }
-    });
-  }
+    if (message.functiontoInvoke === "onClick") {
+        let io = onClick();
+
+        chrome.storage.sync.get({
+            language: 'Java',
+        }, function (items) {
+            switch (items.language) {
+                case "Java":
+                    copy(createJUnit(io));
+                    break;
+                case "CSharp":
+                    copy(createMSTest(io));
+                    break;
+                case "Python3":
+                    copy(createPyUnittest(io));
+                    break;
+                case "Kotlin":
+                    copy(createJUnitKotlin(io));
+                    break;
+                default:
+                    throw new Error("Unknown language. [items.language=" + items.language + "]");
+            }
+        });
+    }
 });
 
-function onClick(){
-  var name = null;
-  var input = null;
-  var output = null;
-  var io = [];
+function onClick() {
+    let name = null;
+    let input = null;
+    let output = null;
+    let io = [];
 
-  var sections = $("#task-statement section");
-  for(var i = 0; i < sections.length; i++){
-    var section = $(sections[i]);
-  
-    var h3 = section.find("h3");
-    var pre = section.find("pre");
+    let sections = $("#task-statement section");
+    for (let i = 0; i < sections.length; i++) {
+        let section = $(sections[i]);
 
-    // SECTION の中に H3 タグがある場合(ABC033_D)と、
-    // SECTION の直前に H3 タグがある場合(ARC014_A)がある
-    if(h3.length == 0){
-      var prev = section.prev();
-      if(prev.length > 0 && prev[0].tagName == "H3"){
-        h3 = prev;
-      }
-    }
-    
-    if(h3.length > 0 && pre.length > 0 && $(h3[0]).is(":visible")){
-      var header = h3[0].firstChild.textContent.trim();
-      var example = pre[0].textContent;
+        let h3 = section.find("h3");
+        let pre = section.find("pre");
 
-      // シンタックスハイライトされている場合、リスト形式に
-      // なっているので、一行ずつ取り出す (ABC007_3、など)
-      var pretty = pre[0].getElementsByTagName("li");
-      if(pretty.length > 0){
-        example = "";
-        for(var j = 0; j < pretty.length; j++){
-          example += pretty[j].textContent;
-          example += "\n";
+        // SECTION の中に H3 タグがある場合(ABC033_D)と、
+        // SECTION の直前に H3 タグがある場合(ARC014_A)がある
+        if (h3.length === 0) {
+            let prev = section.prev();
+            if (prev.length > 0 && prev[0].tagName === "H3") {
+                h3 = prev;
+            }
         }
-      }
 
-      if(header.indexOf("入力例") == 0 || header.indexOf("Sample Input") == 0){
-        name = header.replace(/\s+/g, "_");
-        input = example;
-      }else if(header.indexOf("出力例") == 0 || header.indexOf("Sample Output") == 0){
-        output = example;
-      }
-    }
-    
-    if(name != null && input != null && output != null){
-      io.push({ name: name, input: input, output: output });
-      name = input = output = null;
-    }
-  }
+        if (h3.length > 0 && pre.length > 0 && $(h3[0]).is(":visible")) {
+            let header = h3[0].firstChild.textContent.trim();
+            let example = pre[0].textContent;
 
-  return io;
+            // シンタックスハイライトされている場合、リスト形式に
+            // なっているので、一行ずつ取り出す (ABC007_3、など)
+            let pretty = pre[0].getElementsByTagName("li");
+            if (pretty.length > 0) {
+                example = "";
+                for (let j = 0; j < pretty.length; j++) {
+                    example += pretty[j].textContent;
+                    example += "\n";
+                }
+            }
+
+            if (header.indexOf("入力例") === 0 || header.indexOf("Sample Input") === 0) {
+                name = header.replace(/\s+/g, "_");
+                input = example;
+            } else if (header.indexOf("出力例") === 0 || header.indexOf("Sample Output") === 0) {
+                output = example;
+            }
+        }
+
+        if (name != null && input != null && output != null) {
+            io.push({name: name, input: input, output: output});
+            name = input = output = null;
+        }
+    }
+
+    return io;
 }
 
-function createJUnit(io){
-  var text = 
-`import static org.hamcrest.CoreMatchers.is;
+function createJUnit(io) {
+    let text =
+        `import static org.hamcrest.CoreMatchers.is;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -92,9 +92,9 @@ import org.junit.Test;
 
 public class MainTest {
 `;
-  
-  for(var i = 0; i < io.length; i++){
-    text += `
+
+    for (let i = 0; i < io.length; i++) {
+        text += `
 	@Test
 	public void ${io[i].name}() throws Exception {
 		String input = 
@@ -105,9 +105,9 @@ public class MainTest {
 		assertIO(input, output);
 	}
 `;
-  }
-  
-  text += `
+    }
+
+    text += `
 	private void assertIO(String input, String output) throws Exception {
 		ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes());
 		System.setIn(in);
@@ -121,13 +121,13 @@ public class MainTest {
 	}
 }
 `;
-  
-  return text;
+
+    return text;
 };
 
-function createMSTest(io){
-  var text = 
-`using Microsoft.VisualStudio.TestTools.UnitTesting;
+function createMSTest(io) {
+    let text =
+        `using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 
@@ -136,9 +136,9 @@ namespace AtCoder
     [TestClass]
     public class ProgramTest
     {`;
-  
-  for(var i = 0; i < io.length; i++){
-    text += `
+
+    for (let i = 0; i < io.length; i++) {
+        text += `
         [TestMethod]
         public void ${io[i].name}()
         {
@@ -150,9 +150,9 @@ namespace AtCoder
             AssertIO(input, output);
         }
 `;
-  }
-  
-  text += `
+    }
+
+    text += `
         private void AssertIO(string input, string output)
         {
             StringReader reader = new StringReader(input);
@@ -168,50 +168,62 @@ namespace AtCoder
     }
 }
 `;
-  
-  return text;
+
+    return text;
 }
 
 function createPyUnittest(io) {
-  var text = 
-`import sys
+    let text =
+        `
+"""
+    author: vue
+    created: ${new Date().toLocaleString()}
+"""
+
+
+import sys
 from io import StringIO
 import unittest
 
 
+def sol():
+      
+    print(None)
+    
+    
 class TestClass(unittest.TestCase):
-    def assertIO(self, input, output):
+    def assertIO(self, intake, output):
         stdout, stdin = sys.stdout, sys.stdin
-        sys.stdout, sys.stdin = StringIO(), StringIO(input)
-        resolve()
+        sys.stdout, sys.stdin = StringIO(), StringIO(intake)
+        sol()
         sys.stdout.seek(0)
         out = sys.stdout.read()[:-1]
         sys.stdout, sys.stdin = stdout, stdin
         self.assertEqual(out, output)
 
 `;
-  
-  for(var i = 0; i < io.length; i++){
-    text += 
-`    def test_${io[i].name}(self):
-        input = """${io[i].input.trim("\n").replace(/\n/g, '\r\n')}"""
+
+    for (let i = 0; i < io.length; i++) {
+        text +=
+            `    def test${io[i].name.replace('入力例', '')}(self):
+        intake = """${io[i].input.trim("\n").replace(/\n/g, '\r\n')}"""
         output = """${io[i].output.trim("\n").replace(/\n/g, '\r\n')}"""
-        self.assertIO(input, output)
+        self.assertIO(intake, output)
 
 `;
-  }
+    }
 
-  text += `
+    text += `
 if __name__ == "__main__":
     unittest.main()
 `;
-  
-  return text;
+
+    return text;
 }
 
-function createJUnitKotlin(io){
-  var text = 
-`import org.hamcrest.CoreMatchers.equalTo
+function createJUnitKotlin(io) {
+    let text =
+        `import org.hamcrest.CoreMatchers.equalTo
 import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -220,9 +232,9 @@ import java.io.PrintStream
 
 class MainTest {
 `;
-  
-  for(var i = 0; i < io.length; i++){
-    text +=`
+
+    for (let i = 0; i < io.length; i++) {
+        text += `
     @Test
     fun ${io[i].name}() {
         val input =
@@ -233,9 +245,9 @@ class MainTest {
         assertIO(input, output);
     }
 `;
-  }
-  
-  text +=`
+    }
+
+    text += `
     private fun assertIO(input: String, output: String) {
         val sysIn = ByteArrayInputStream(input.toByteArray())
         System.setIn(sysIn)
@@ -249,22 +261,22 @@ class MainTest {
     }
 }
 `;
-  
-  return text;
+
+    return text;
 };
 
-function copy(text){
-    var textArea = document.createElement("textarea");
+function copy(text) {
+    let textArea = document.createElement("textarea");
     textArea.style.cssText = "position: absolute; left: -100%;";
 
-    try{
+    try {
         document.body.appendChild(textArea);
 
         textArea.value = text;
         textArea.select();
-    
+
         document.execCommand("copy");
-    }finally{
+    } finally {
         document.body.removeChild(textArea);
     }
 }
